@@ -5,23 +5,23 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Arxa fonda hərəkət edən emojilərin yaradılması
-function createFloatingEmojis() {
+// Arxa fonda hərəkət edən PUBG elementləri
+function createFloatingPUBGElements() {
     const container = document.getElementById('bg-animations');
-    const emojis = ['🎮', '⚡', '🔥', '🏆', '💎', '🎯'];
+    const pubgTexts = ['M416 🔥', 'AWM 🎯', 'UC 💎', 'LEVEL 3 🛡️', 'PUBG MOBILE 🎮', 'KILL 💀', 'AIRDROP 📦', 'PAN 🍳'];
     setInterval(() => {
         const span = document.createElement('span');
-        span.className = 'floating-emoji';
-        span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-        span.style.left = Math.random() * 100 + 'vw';
-        span.style.animationDuration = (6 + Math.random() * 6) + 's';
+        span.className = 'floating-pubg';
+        span.innerText = pubgTexts[Math.floor(Math.random() * pubgTexts.length)];
+        span.style.left = Math.random() * 90 + 'vw';
+        span.style.animationDuration = (8 + Math.random() * 6) + 's';
         container.appendChild(span);
-        setTimeout(() => span.remove(), 10000);
-    }, 1200);
+        setTimeout(() => span.remove(), 14000);
+    }, 1500);
 }
-createFloatingEmojis();
+createFloatingPUBGElements();
 
-// Xüsusi Sayt Bildirişi (GitHub bildirişi əvəzinə)
+// Xüsusi Sayt Bildirişi
 function showCustomAlert(text) {
     let alertBox = document.getElementById('custom-alert');
     alertBox.innerText = text;
@@ -49,12 +49,9 @@ let currentUser = {
 
 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
     let tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    currentUser.id = tgUser.id;
+    currentUser.id = 'tg_' + tgUser.id;
     currentUser.name = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
 }
-
-document.getElementById('profile-name').innerText = currentUser.name;
-document.getElementById('join-date').innerText = currentUser.joinDate;
 
 // Real-time User Data Sync
 db.ref('users/' + currentUser.id).on('value', (snapshot) => {
@@ -63,6 +60,8 @@ db.ref('users/' + currentUser.id).on('value', (snapshot) => {
         currentUser.balance = data.balance || 0;
         currentUser.bonus = data.bonus || 0;
         currentUser.avatar = data.avatar || '';
+        currentUser.name = data.name || currentUser.name;
+        document.getElementById('profile-name').innerText = currentUser.name;
         document.getElementById('user-balance').innerText = '₼ ' + currentUser.balance.toFixed(2);
         document.getElementById('home-user-balance').innerText = '₼ ' + currentUser.balance.toFixed(2);
         document.getElementById('user-bonus').innerText = '₼ ' + currentUser.bonus.toFixed(2);
@@ -78,7 +77,40 @@ db.ref('users/' + currentUser.id).on('value', (snapshot) => {
             avatar: ''
         });
     }
+    document.getElementById('join-date').innerText = currentUser.joinDate;
 });
+
+// İstifadəçi adını dəyişmək (Eyni adı başqasının qoymasını yoxlamaqla)
+function changeUsernamePrompt() {
+    let newName = prompt("Yeni istifadəçi adınızı daxil edin:", currentUser.name);
+    if (!newName || newName.trim() === "") return;
+    newName = newName.trim();
+
+    if(newName === currentUser.name) return;
+
+    // Bütün istifadəçiləri yoxla ki, bu ad başqasında var ya yox
+    db.ref('users').once('value', snapshot => {
+        let allUsers = snapshot.val();
+        let nameExists = false;
+        if(allUsers) {
+            Object.values(allUsers).forEach(u => {
+                if(u.name && u.name.toLowerCase() === newName.toLowerCase()) {
+                    nameExists = true;
+                }
+            });
+        }
+
+        if(nameExists) {
+            showCustomAlert('Bu istifadəçi adı artıq başqası tərəfindən istifadə olunur! Başqa ad seçin.');
+        } else {
+            db.ref('users/' + currentUser.id + '/name').set(newName).then(() => {
+                currentUser.name = newName;
+                document.getElementById('profile-name').innerText = newName;
+                showCustomAlert('İstifadəçi adı uğurla dəyişdirildi!');
+            });
+        }
+    });
+}
 
 // Profil Şəklini Qalereyadan Seçib Yükləmək
 function updateProfileAvatar(input) {
@@ -102,7 +134,7 @@ function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
-// Balans Əlavə Et Mərhələləri (İlk məbləğ, sonra random kart)
+// Balans Əlavə Et Mərhələləri (Random Kart Seçimi)
 let selectedDepositCard = "";
 let currentDepositAmount = 0;
 
@@ -126,10 +158,10 @@ function proceedToCard() {
                 document.getElementById('step-amount-box').style.display = 'none';
                 document.getElementById('step-card-box').style.display = 'block';
             } else {
-                showCustomAlert('Hazırda aktiv ödəniş kartı mövcud deyil.');
+                showCustomAlert('Hazırda aktiv ödəniş kartı mövcud deyil. Adminə müraciət edin.');
             }
         } else {
-            showCustomAlert('Hazırda aktiv ödəniş kartı mövcud deyil.');
+            showCustomAlert('Hazırda aktiv ödəniş kartı mövcud deyil. Adminə müraciət edin.');
         }
     });
 }
@@ -200,7 +232,7 @@ function switchTab(tabName, element) {
     element.classList.add('active');
 }
 
-// Elan Əlavə Etmək (Qalereyadan şəkil seçimi ilə)
+// Elan Əlavə Etmək (Təsdiqlə düyməsi problemi həll olundu)
 document.getElementById('ad-form').addEventListener('submit', function(e) {
     e.preventDefault();
     let fileInput = document.getElementById('ad-images-file');
@@ -241,7 +273,7 @@ function saveAdToDB(imgData) {
     });
 }
 
-// Elanları Dinləmək və Göstərmək (Xəbərdarlıq ilə birlikdə)
+// Elanları Dinləmək və Göstərmək (Sayt xəbərdarlığı ilə)
 db.ref('ads').on('value', (snapshot) => {
     let adsList = document.getElementById('ads-list');
     adsList.innerHTML = '';
@@ -265,7 +297,7 @@ db.ref('ads').on('value', (snapshot) => {
 });
 
 function viewAd(id) {
-    alert("Diqqət: Sayt içi alışverişə zəmanət verilir, kənar tətbiqlərdə alışverişə cavabdeh deyilik!");
+    showCustomAlert("Diqqət: Sayt içi alışverişə zəmanət verilir, kənar tətbiqlərdə alışverişə cavabdeh deyilik!");
     db.ref('ads/' + id + '/views').transaction(views => (views || 0) + 1);
 }
 
@@ -298,7 +330,7 @@ document.getElementById('support-form').addEventListener('submit', function(e) {
     });
 });
 
-// Dəvət Linki (5 bonus üçün)
+// Dəvət Linki
 function copyInviteLink() {
     let inviteUrl = `https://t.me/RentXBot?start=${currentUser.id}`;
     navigator.clipboard.writeText(inviteUrl);
@@ -306,5 +338,5 @@ function copyInviteLink() {
 }
 
 function rateSeller(stars) {
-    showCustomAlert(`Təşəkkürlər! Satıcıya ${stars} ulduz verдра.`);
+    showCustomAlert(`Təşəkkürlər! Satıcıya ${stars} ulduz verdiniz.`);
 }
