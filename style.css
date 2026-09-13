@@ -24,7 +24,7 @@ body {
     position: relative;
 }
 
-/* Arxa fonda hərəkət edən emojilər */
+/* Arxa fonda hərəkət edən PUBG elementləri / ikonları */
 .bg-animations {
     position: fixed;
     top: 0;
@@ -36,16 +36,20 @@ body {
     overflow: hidden;
 }
 
-.floating-emoji {
+.floating-pubg {
     position: absolute;
-    font-size: 24px;
-    opacity: 0.15;
-    animation: floatUp 10s linear infinite;
+    font-size: 20px;
+    font-weight: bold;
+    color: rgba(255, 30, 30, 0.15);
+    animation: floatUp 12s linear infinite;
+    text-shadow: 0 0 5px rgba(255, 30, 30, 0.2);
 }
 
 @keyframes floatUp {
-    0% { transform: translateY(100vh) rotate(0deg); }
-    100% { transform: translateY(-10vh) rotate(360deg); }
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    20% { opacity: 0.25; }
+    80% { opacity: 0.25; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
 }
 
 /* Splash Screen */
@@ -188,7 +192,7 @@ input:focus, select:focus, textarea:focus {
     font-size: 12px;
 }
 
-/* Xüsusi Bildiriş (Custom Alert) */
+/* Xüsusi Sayt Bildirişi */
 #custom-alert {
     position: fixed;
     top: 20px;
@@ -210,7 +214,7 @@ input:focus, select:focus, textarea:focus {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Modal Pəncərələr (Balans və Çıxarış üçün) */
+/* Modal Pəncərələr */
 .modal {
     display: none;
     position: fixed;
