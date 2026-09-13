@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentX - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <!-- Login Ekranı -->
+    <div id="admin-login" class="container" style="margin-top: 100px; max-width: 400px;">
+        <div class="card">
+            <h2 style="color: var(--primary-red); text-align: center; margin-bottom: 15px;">Admin Girişi</h2>
+            <input type="text" id="admin-user" placeholder="İstifadəçi adı">
+            <input type="password" id="admin-pass" placeholder="Şifrə">
+            <button onclick="checkAdminLogin()" class="neon-btn">Daxil Ol</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Kontent -->
+    <div id="admin-dashboard" class="container" style="display: none; padding-bottom: 50px;">
+        <h1 style="color: var(--primary-red); margin-bottom: 20px;">RentX Admin Panel</h1>
+        
+        <!-- Statistika -->
+        <div class="card">
+            <h3>Statistika</h3>
+            <p>Ümumi Gələn Pul (Depozit): <span id="stat-income" style="color: #00ff00;">0 ₅</span></p>
+            <p>Ümumi Çıxan Pul: <span id="stat-outcome" style="color: var(--primary-red);">0 ₅</span></p>
+        </div>
+
+        <!-- Balans Sorğuları -->
+        <div class="card">
+            <h3>Depozit Sorğuları</h3>
+            <div id="admin-deposits"></div>
+        </div>
+
+        <!-- Çıxarış Sorğuları -->
+        <div class="card">
+            <h3>Çıxarış Sorğuları</h3>
+            <div id="admin-withdrawals"></div>
+        </div>
+
+        <!-- Elan Təsdiqləri -->
+        <div class="card">
+            <h3>Elan Təsdiqləri</h3>
+            <div id="admin-ads"></div>
+        </div>
+
+        <!-- Dəstək Sorğuları -->
+        <div class="card">
+            <h3>Dəstək Mesajları</h3>
+            <div id="admin-support"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://rentx-8849b-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function checkAdminLogin() {
+            let u = document.getElementById('admin-user').value;
+            let p = document.getElementById('admin-pass').value;
+
+            if(u === 'K9ESCOBAR211_' && p === 'SSAH_6789$_1') {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                loadAdminData();
+            } else {
+                alert('İstifadəçi adı və ya şifrə səhvdir!');
+            }
+        }
+
+        function loadAdminData() {
+            // Statistika və Depozitlər
+            db.ref('deposits').on('value', snapshot => {
+                let container = document.getElementById('admin-deposits');
+                container.innerHTML = '';
+                let totalIncome = 0;
+                snapshot.forEach(child => {
+                    let dep = child.val();
+                    if(dep.status === 'Uğurla balansa əlavə olundu') totalIncome += dep.amount;
+                    container.innerHTML += `
+                        <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
+                            <p><b>${dep.userName}</b> - ${dep.amount} AZN (Qəbz: ${dep.receipt})</p>
+                            <p>Status: ${dep.status}</p>
+                            ${dep.status === 'Gözləmədədir' ? `
+                                <button onclick="updateDeposit('${dep.id}', '${dep.userId}', ${dep.amount}, 'Uğurla balansa əlavə olundu')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Təsdiq Et</button>
+                                <button onclick="updateDepositStatus('${dep.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                document.getElementById('stat-income').innerText = totalIncome + ' ₅';
+            });
+
+            // Çıxarışlar
+            db.ref('withdrawals').on('value', snapshot => {
+                let container = document.getElementById('admin-withdrawals');
+                container.innerHTML = '';
+                let totalOutcome = 0;
+                snapshot.forEach(child => {
+                    let w = child.val();
+                    if(w.status === 'Uğurlu') totalOutcome += w.amount;
+                    container.innerHTML += `
+                        <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
+                            <p><b>${w.userName}</b> - ${w.amount} AZN (Kart: ${w.card})</p>
+                            <p>Status: ${w.status}</p>
+                            ${w.status === 'Emal edilir' ? `
+                                <button onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ödə</button>
+                                <button onclick="updateWithdrawStatus('${w.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                document.getElementById('stat-outcome').innerText = totalOutcome + ' ₅';
+            });
+
+            // Elanlar
+            db.ref('ads').on('value', snapshot => {
+                let container = document.getElementById('admin-ads');
+                container.innerHTML = '';
+                snapshot.forEach(child => {
+                    let ad = child.val();
+                    container.innerHTML += `
+                        <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
+                            <p><b>Elan №: ${ad.id}</b> | ${ad.game} - ${ad.price} AZN</p>
+                            <p style="font-size:12px; color:#aaa;">${ad.notes}</p>
+                            <p>Status: ${ad.status}</p>
+                            <button onclick="updateAdStatus(${ad.id}, 'Elan əlavə edildi')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Təsdiq Et</button>
+                            <button onclick="updateAdStatus(${ad.id}, 'Elan ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                        </div>
+                    `;
+                });
+            });
+
+            // Dəstək
+            db.ref('support').on('value', snapshot => {
+                let container = document.getElementById('admin-support');
+                container.innerHTML = '';
+                snapshot.forEach(child => {
+                    let s = child.val();
+                    container.innerHTML += `
+                        <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
+                            <p><b>${s.userName}:</b> ${s.message}</p>
+                            <input type="text" id="reply_${s.id}" placeholder="Cavab yaz..." style="margin-top:5px;">
+                            <button onclick="replySupport('${s.id}')" style="background:var(--primary-red); color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Cavabla</button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function updateDeposit(depId, userId, amount, status) {
+            db.ref('deposits/' + depId + '/status').set(status);
+            db.ref('users/' + userId + '/balance').transaction(current => (current || 0) + amount);
+        }
+
+        function updateDepositStatus(depId, status) {
+            db.ref('deposits/' + depId + '/status').set(status);
+        }
+
+        function updateWithdrawStatus(withId, status) {
+            db.ref('withdrawals/' + withId + '/status').set(status);
+        }
+
+        function approveWithdrawal(withId, userId, amount) {
+            db.ref('users/' + userId + '/balance').once('value', snapshot => {
+                let currentBal = snapshot.val() || 0;
+                if(currentBal >= amount) {
+                    db.ref('users/' + userId + '/balance').set(currentBal - amount);
+                    db.ref('withdrawals/' + withId + '/status').set('Uğurlu');
+                } else {
+                    alert('İstifadəçinin balansında kifayət qədər vəsait yoxdur!');
+                }
+            });
+        }
+
+        function updateAdStatus(adId, status) {
+            db.ref('ads/' + adId + '/status').set(status);
+        }
+
+        function replySupport(ticId) {
+            let replyText = document.getElementById('reply_' + ticId).value;
+            db.ref('support/' + ticId).update({
+                reply: replyText,
+                status: 'Cavab verildi'
+            });
+            alert('Cavab göndərildi!');
+        }
+    </script>
+</body>
+</html>
+
