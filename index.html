@@ -12,10 +12,47 @@
 </head>
 <body>
 
+    <!-- Arxa fonda hərəkət edən oyun emojiləri -->
+    <div class="bg-animations" id="bg-animations"></div>
+
+    <!-- Custom Bildiriş Bloku -->
+    <div id="custom-alert">Bildiriş mesajı</div>
+
     <!-- Splash Screen -->
     <div id="splash-screen">
-        <img src="image.png" alt="RentX Logo">
+        <img id="splash-logo" src="image.png" alt="RentX Logo" onerror="this.src='https://via.placeholder.com/120/141414/ff1e1e?text=RentX'">
         <h2>RentX Xoş Gəldiniz!</h2>
+    </div>
+
+    <!-- Balans Artırma Modalı -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('deposit-modal')">&times;</span>
+            <h3 style="margin-bottom: 15px; color: var(--primary-red);">Balans Əlavə Et</h3>
+            <div id="step-amount-box">
+                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 8px;">Minimum 1 ₼, Maksimum 100 ₼</p>
+                <input type="number" id="deposit-amount" min="1" max="100" placeholder="Məbləği daxil edin (AZN)">
+                <button onclick="proceedToCard()" class="neon-btn">Davam Et</button>
+            </div>
+            <div id="step-card-box" style="display:none;">
+                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">Ödəniş edəcəyiniz kart:</p>
+                <div id="target-card-info" style="background:#1a1a1a; padding:10px; border-radius:6px; font-weight:bold; margin-bottom:10px; border:1px dashed var(--primary-red);"></div>
+                <input type="text" id="deposit-receipt" placeholder="Ödəniş qəbzi nömrəsi / linki" required>
+                <button onclick="makeDeposit()" class="neon-btn">Ödənişi Təsdiqə Göndər</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Çıxarış Modalı -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('withdraw-modal')">&times;</span>
+            <h3 style="margin-bottom: 15px; color: var(--primary-red);">Pul Çıxarışı</h3>
+            <p style="font-size: 11px; color: var(--text-gray); margin-bottom: 8px;">Min: 3 ₼, Max: 50 ₼ | Heç bir komissiya tutulmur</p>
+            <input type="number" id="withdraw-amount" min="3" max="50" placeholder="Çıxarılacaq məbləğ">
+            <input type="text" id="withdraw-card" placeholder="Kart nömrəsi (AZ...)" required>
+            <button onclick="makeWithdraw()" class="neon-btn">Çıxarış Et</button>
+        </div>
     </div>
 
     <!-- Main Container -->
@@ -23,6 +60,12 @@
         
         <!-- 1. Əsas Səhifə -->
         <div id="home-section" class="section active">
+            <!-- Balans Yaşıl Sahədə -->
+            <div style="background: linear-gradient(135deg, #0b3d0b, #134e13); border: 1px solid #1e7e1e; padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);">
+                <span style="font-size: 14px; color: #a3d9a3;">Cari Balansınız:</span>
+                <span id="home-user-balance" style="font-size: 18px; font-weight: bold; color: #2ecc71;">₼ 0.00</span>
+            </div>
+
             <h2>PUBG Mobile Elanları</h2>
             <div id="ads-list" style="margin-top: 15px;"></div>
         </div>
@@ -32,6 +75,13 @@
             <h2>Dəstək Mərkəzi</h2>
             <div class="card">
                 <form id="support-form">
+                    <label style="font-size: 13px; color: var(--text-gray); display: block; margin-bottom: 5px;">Mövzu / Problem Kateqoriyası:</label>
+                    <select id="support-category" required>
+                        <option value="Balansla bağlı">Balansla bağlı</option>
+                        <option value="Çıxarışla bağlı">Çıxarışla bağlı</option>
+                        <option value="Satıcı ilə bağlı">Satıcı ilə bağlı</option>
+                        <option value="Digər">Digər</option>
+                    </select>
                     <textarea id="support-message" placeholder="Problem və ya sualınızı ətraflı yazın..." rows="4" required></textarea>
                     <button type="submit" class="neon-btn">Sorğu Göndər</button>
                 </form>
@@ -55,7 +105,10 @@
                     </select>
                     <input type="number" id="ad-price" placeholder="Qiymət (AZN)" required>
                     <textarea id="ad-notes" placeholder="Hesab məlumatları və qeydlər" required></textarea>
-                    <input type="text" id="ad-images" placeholder="Hesab şəkillərinin linkləri (vergüllə ayırın)" required>
+                    
+                    <label style="font-size: 12px; color: var(--text-gray); display: block; margin-bottom: 5px;">Hesab Şəkilləri (Qalereyadan seçin):</label>
+                    <input type="file" id="ad-images-file" accept="image/*" multiple required style="padding: 8px;">
+
                     <button type="submit" class="neon-btn">Təsdiqə Göndər</button>
                 </form>
             </div>
@@ -65,70 +118,61 @@
         <div id="chat-section" class="section">
             <h2>Söhbətlər</h2>
             <div class="card" style="text-align: center; color: var(--text-gray);">
-                <p>Aktiv söhbət yoxdur. Elan sahibləri ilə elanlar vasitəsilə əlaqə saxlaya bilərsiniz.</p>
+                <p>Aktiv söhbət yoxdur. Elan sahibləri ilə əlaqə saxlaya bilərsiniz.</p>
             </div>
         </div>
 
         <!-- 5. Profil Bölməsi -->
         <div id="profile-section" class="section">
             <div class="card" style="text-align: center;">
-                <img id="user-avatar" src="image.png" alt="Profil" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover;">
+                <div style="position: relative; width: 80px; height: 80px; margin: 0 auto;">
+                    <img id="user-avatar" src="image.png" alt="Profil" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover;" onerror="this.src='https://via.placeholder.com/80/141414/ff1e1e?text=User'">
+                    <label for="avatar-file-input" style="position: absolute; bottom: 0; right: 0; background: var(--primary-red); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px;">
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatar-file-input" accept="image/*" style="display: none;" onchange="updateProfileAvatar(this)">
+                </div>
+                
                 <h3 id="profile-name" style="margin-top: 10px;">İstifadəçi</h3>
                 <p style="color: var(--text-gray); font-size: 12px;">Qoşulma tarixi: <span id="join-date">23.01.2026</span></p>
                 
                 <div style="margin-top: 15px; display: flex; justify-content: space-around; background: #1a1a1a; padding: 10px; border-radius: 8px;">
                     <div>
                         <small>Balans</small>
-                        <h4 id="user-balance" style="color: var(--primary-red);">0.00 AZN</h4>
+                        <h4 id="user-balance" style="color: var(--primary-red);">₼ 0.00</h4>
                     </div>
                     <div>
                         <small>Bonus Balans</small>
-                        <h4 id="user-bonus" style="color: #ffaa00;">0.00 AZN</h4>
+                        <h4 id="user-bonus" style="color: #ffaa00;">₼ 0.00</h4>
                     </div>
                 </div>
-            </div>
 
-            <!-- Balans Əlavə Et / Çıxarış -->
-            <div class="card">
-                <h3>Balans Əlavə Et (Min: 1 ₼, Max: 100 ₼)</h3>
-                <div id="assigned-card-box" style="background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px dashed var(--primary-red);">
-                    <small style="color: var(--text-gray);">Ödəniş üçün təyin olunan kart:</small>
-                    <p id="target-card-info" style="font-weight: bold; color: white; margin-top: 4px;">Kartlar yüklənir...</p>
+                <!-- Balans Əlavə Et və Çıxarış düymələri (Ayrı pəncərə/modal açır) -->
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="openModal('deposit-modal')" class="neon-btn" style="padding: 8px; font-size: 13px;">Balans Əlavə Et</button>
+                    <button onclick="openModal('withdraw-modal')" class="neon-btn" style="padding: 8px; font-size: 13px; background: #333;">Çıxarış Et</button>
                 </div>
-                <input type="number" id="deposit-amount" min="1" max="100" placeholder="Məbləğ daxil edin">
-                <input type="text" id="deposit-receipt" placeholder="Ödəniş qəbzi nömrəsi / linki" required>
-                <button onclick="makeDeposit()" class="neon-btn">Depozit Ver</button>
-                <div id="deposit-status-list" style="margin-top: 10px;"></div>
-            </div>
-
-            <div class="card">
-                <h3>Pul Çıxarışı (Min: 3 ₼, Max: 50 ₼)</h3>
-                <p style="font-size: 11px; color: var(--text-gray); margin-bottom: 8px;">Altda heç bir komissiya tutulmur</p>
-                <input type="number" id="withdraw-amount" min="3" max="50" placeholder="Çıxarılacaq məbləğ">
-                <input type="text" id="withdraw-card" placeholder="Kart nömrəsi (AZ...)" required>
-                <button onclick="makeWithdraw()" class="neon-btn">Çıxarış Et</button>
-                <div id="withdraw-status-list" style="margin-top: 10px;"></div>
             </div>
 
             <!-- Dostunu Dəvət Et -->
             <div class="card">
-                <h3>Dostunu Dəvət Et (+3 ₼ Bonus)</h3>
-                <p style="font-size: 12px; color: var(--text-gray); margin: 8px 0;">Dostunu gətir, bonus qazan! (Bonus istifadəsi hələlik bağlıdır).</p>
+                <h3>Dostunu Dəvət Et (+5 ₼ Bonus)</h3>
+                <p style="font-size: 12px; color: var(--text-gray); margin: 8px 0;">Dostunu gətir, bonus balansına 5 ₼ yığılsın! (Bonus istifadəsi hələlik bağlıdır).</p>
                 <button onclick="copyInviteLink()" class="neon-btn">Dəvət Linkini Kopyala</button>
             </div>
 
-            <!-- Kanallar və Rəy -->
+            <!-- Kanallar və Satıcı Qiymətləndirmə -->
             <div class="card">
                 <h3>Rəsmi Kanal</h3>
                 <a href="https://www.tiktok.com/@rentx10?_r=1&_t=ZS-99hW36siVEm" target="_blank" style="color: var(--primary-red); display: block; margin: 8px 0;"><i class="fa-brands fa-tiktok"></i> TikTok Səhifəmiz</a>
                 
-                <h3 style="margin-top: 15px;">Qiymətləndir</h3>
+                <h3 style="margin-top: 15px;">Satıcını Qiymətləndir</h3>
                 <div id="star-rating" style="font-size: 24px; color: #ffaa00; cursor: pointer; margin: 10px 0;">
-                    <i class="fa-solid fa-star" onclick="rateApp(1)"></i>
-                    <i class="fa-solid fa-star" onclick="rateApp(2)"></i>
-                    <i class="fa-solid fa-star" onclick="rateApp(3)"></i>
-                    <i class="fa-solid fa-star" onclick="rateApp(4)"></i>
-                    <i class="fa-solid fa-star" onclick="rateApp(5)"></i>
+                    <i class="fa-solid fa-star" onclick="rateSeller(1)"></i>
+                    <i class="fa-solid fa-star" onclick="rateSeller(2)"></i>
+                    <i class="fa-solid fa-star" onclick="rateSeller(3)"></i>
+                    <i class="fa-solid fa-star" onclick="rateSeller(4)"></i>
+                    <i class="fa-solid fa-star" onclick="rateSeller(5)"></i>
                 </div>
             </div>
         </div>
