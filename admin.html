@@ -28,8 +28,18 @@
         <!-- Statistika -->
         <div class="card">
             <h3>Statistika</h3>
-            <p>Ümumi Gələn Pul (Depozit): <span id="stat-income" style="color: #00ff00;">0 ₅</span></p>
-            <p>Ümumi Çıxan Pul: <span id="stat-outcome" style="color: var(--primary-red);">0 ₅</span></p>
+            <p>Ümumi Gələn Pul (Depozit): <span id="stat-income" style="color: #00ff00;">0 ₼</span></p>
+            <p>Ümumi Çıxan Pul: <span id="stat-outcome" style="color: var(--primary-red);">0 ₼</span></p>
+        </div>
+
+        <!-- Kart İdarəetməsi (Maksimum 5) -->
+        <div class="card">
+            <h3>Depozit Kartları (Maks: 5)</h3>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <input type="text" id="new-card-title" placeholder="Məs: Kapital Bank: 4169 ... 8821" style="margin-bottom:0;">
+                <button onclick="addNewCard()" class="neon-btn" style="width: 150px;">Əlavə Et</button>
+            </div>
+            <div id="admin-cards-list" style="margin-top: 15px;"></div>
         </div>
 
         <!-- Balans Sorğuları -->
@@ -76,6 +86,25 @@
         }
 
         function loadAdminData() {
+            // Kartların İdarəsi və Siyahısı
+            db.ref('admin_cards').on('value', snapshot => {
+                let container = document.getElementById('admin-cards-list');
+                container.innerHTML = '';
+                let cards = snapshot.val();
+                window.currentCardCount = cards ? Object.keys(cards).length : 0;
+                
+                if(cards) {
+                    Object.entries(cards).forEach(([id, card]) => {
+                        container.innerHTML += `
+                            <div style="background:#1a1a1a; padding:8px 12px; margin-top:6px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                                <span>${card.title}</span>
+                                <button onclick="deleteCard('${id}')" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Sil</button>
+                            </div>
+                        `;
+                    });
+                }
+            });
+
             // Statistika və Depozitlər
             db.ref('deposits').on('value', snapshot => {
                 let container = document.getElementById('admin-deposits');
@@ -86,16 +115,16 @@
                     if(dep.status === 'Uğurla balansa əlavə olundu') totalIncome += dep.amount;
                     container.innerHTML += `
                         <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
-                            <p><b>${dep.userName}</b> - ${dep.amount} AZN (Qəbz: ${dep.receipt})</p>
-                            <p>Status: ${dep.status}</p>
+                            <p><b>${dep.userName}</b> - ${dep.amount} AZN (Kart: ${dep.cardUsed || 'N/A'})</p>
+                            <p>Qəbz: ${dep.receipt} | Status: ${dep.status}</p>
                             ${dep.status === 'Gözləmədədir' ? `
-                                <button onclick="updateDeposit('${dep.id}', '${dep.userId}', ${dep.amount}, 'Uğurla balansa əlavə olundu')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Təsdiq Et</button>
-                                <button onclick="updateDepositStatus('${dep.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                                <button onclick="updateDeposit('${dep.id}', '${dep.userId}', ${dep.amount}, 'Uğurla balansa əlavə olundu')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Təsdiq Et</button>
+                                <button onclick="updateDepositStatus('${dep.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ləğv Et</button>
                             ` : ''}
                         </div>
                     `;
                 });
-                document.getElementById('stat-income').innerText = totalIncome + ' ₅';
+                document.getElementById('stat-income').innerText = totalIncome + ' ₼';
             });
 
             // Çıxarışlar
@@ -111,13 +140,13 @@
                             <p><b>${w.userName}</b> - ${w.amount} AZN (Kart: ${w.card})</p>
                             <p>Status: ${w.status}</p>
                             ${w.status === 'Emal edilir' ? `
-                                <button onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ödə</button>
-                                <button onclick="updateWithdrawStatus('${w.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                                <button onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ödə</button>
+                                <button onclick="updateWithdrawStatus('${w.id}', 'Ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ləğv Et</button>
                             ` : ''}
                         </div>
                     `;
                 });
-                document.getElementById('stat-outcome').innerText = totalOutcome + ' ₅';
+                document.getElementById('stat-outcome').innerText = totalOutcome + ' ₼';
             });
 
             // Elanlar
@@ -131,8 +160,8 @@
                             <p><b>Elan №: ${ad.id}</b> | ${ad.game} - ${ad.price} AZN</p>
                             <p style="font-size:12px; color:#aaa;">${ad.notes}</p>
                             <p>Status: ${ad.status}</p>
-                            <button onclick="updateAdStatus(${ad.id}, 'Elan əlavə edildi')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Təsdiq Et</button>
-                            <button onclick="updateAdStatus(${ad.id}, 'Elan ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ləğv Et</button>
+                            <button onclick="updateAdStatus(${ad.id}, 'Elan əlavə edildi')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Təsdiq Et</button>
+                            <button onclick="updateAdStatus(${ad.id}, 'Elan ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ləğv Et</button>
                         </div>
                     `;
                 });
@@ -153,6 +182,32 @@
                     `;
                 });
             });
+        }
+
+        function addNewCard() {
+            let cardTitle = document.getElementById('new-card-title').value.trim();
+            if(!cardTitle) {
+                alert('Kart məlumatını daxil edin!');
+                return;
+            }
+            if(window.currentCardCount >= 5) {
+                alert('Maksimum 5 kart əlavə edə bilərsiniz!');
+                return;
+            }
+            let cardId = 'card_' + Date.now();
+            db.ref('admin_cards/' + cardId).set({
+                id: cardId,
+                title: cardTitle
+            }).then(() => {
+                document.getElementById('new-card-title').value = '';
+                alert('Kart uğurla əlavə olundu!');
+            });
+        }
+
+        function deleteCard(cardId) {
+            if(confirm('Bu kartı silmək istədiyinizə əminsiniz?')) {
+                db.ref('admin_cards/' + cardId).remove();
+            }
         }
 
         function updateDeposit(depId, userId, amount, status) {
@@ -195,4 +250,3 @@
     </script>
 </body>
 </html>
-
