@@ -11,6 +11,9 @@
 </head>
 <body>
 
+    <!-- Custom Bildiriş -->
+    <div id="custom-alert">Bildiriş mesajı</div>
+
     <!-- Login Ekranı -->
     <div id="admin-login" class="container" style="margin-top: 100px; max-width: 400px;">
         <div class="card">
@@ -30,6 +33,12 @@
             <h3>Statistika</h3>
             <p>Ümumi Gələn Pul (Depozit): <span id="stat-income" style="color: #00ff00;">0 ₼</span></p>
             <p>Ümumi Çıxan Pul: <span id="stat-outcome" style="color: var(--primary-red);">0 ₼</span></p>
+        </div>
+
+        <!-- İstifadəçilər Siyahısı -->
+        <div class="card">
+            <h3>Qeydiyyatdan Keçən İstifadəçilər</h3>
+            <div id="admin-users-list" style="margin-top: 10px;"></div>
         </div>
 
         <!-- Rəsmi RentX Elan Yerləşdir (Admin) -->
@@ -91,6 +100,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        function showCustomAlert(text) {
+            let alertBox = document.getElementById('custom-alert');
+            alertBox.innerText = text;
+            alertBox.classList.add('show');
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 3000);
+        }
+
         function checkAdminLogin() {
             let u = document.getElementById('admin-user').value;
             let p = document.getElementById('admin-pass').value;
@@ -100,7 +118,7 @@
                 document.getElementById('admin-dashboard').style.display = 'block';
                 loadAdminData();
             } else {
-                alert('İstifadəçi adı və ya şifrə səhvdir!');
+                showCustomAlert('İstifadəçi adı və ya şifrə səhvdir!');
             }
         }
 
@@ -126,7 +144,7 @@
                         date: new Date().toLocaleString()
                     };
                     db.ref('ads/' + adId).set(adData).then(() => {
-                        alert('Rəsmi RentX elanı uğurla paylaşıldı!');
+                        showCustomAlert('Rəsmi RentX elanı uğurla paylaşıldı!');
                         document.getElementById('admin-ad-form').reset();
                     });
                 }
@@ -135,6 +153,25 @@
         });
 
         function loadAdminData() {
+            // İstifadəçiləri yüklə və göstər
+            db.ref('users').on('value', snapshot => {
+                let container = document.getElementById('admin-users-list');
+                container.innerHTML = '';
+                let users = snapshot.val();
+                if(users) {
+                    Object.entries(users).forEach(([id, u]) => {
+                        container.innerHTML += `
+                            <div style="background:#1a1a1a; padding:8px 12px; margin-top:6px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                                <span><b>Ad:</b> ${u.name || 'Naməlum'} | <b>Balans:</b> ₼ ${(u.balance || 0).toFixed(2)}</span>
+                                <span style="font-size:11px; color:#aaa;">ID: ${id}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = '<p style="color:#aaa; font-size:12px;">Hələ qeydiyyatdan keçən istifadəçi yoxdur.</p>';
+                }
+            });
+
             db.ref('admin_cards').on('value', snapshot => {
                 let container = document.getElementById('admin-cards-list');
                 container.innerHTML = '';
@@ -233,11 +270,11 @@
         function addNewCard() {
             let cardTitle = document.getElementById('new-card-title').value.trim();
             if(!cardTitle) {
-                alert('Kart məlumatını daxil edin!');
+                showCustomAlert('Kart məlumatını daxil edin!');
                 return;
             }
             if(window.currentCardCount >= 5) {
-                alert('Maksimum 5 kart əlavə edə bilərsiniz!');
+                showCustomAlert('Maksimum 5 kart əlavə edə bilərsiniz!');
                 return;
             }
             let cardId = 'card_' + Date.now();
@@ -246,7 +283,7 @@
                 title: cardTitle
             }).then(() => {
                 document.getElementById('new-card-title').value = '';
-                alert('Kart uğurla əlavə olundu!');
+                showCustomAlert('Kart uğurla əlavə olundu!');
             });
         }
 
@@ -276,7 +313,7 @@
                     db.ref('users/' + userId + '/balance').set(currentBal - amount);
                     db.ref('withdrawals/' + withId + '/status').set('Uğurlu');
                 } else {
-                    alert('İstifadəçinin balansında kifayət qədər vəsait yoxdur!');
+                    showCustomAlert('İstifadəçinin balansında kifayət qədər vəsait yoxdur!');
                 }
             });
         }
@@ -291,7 +328,7 @@
                 reply: replyText,
                 status: 'Cavab verildi'
             });
-            alert('Cavab göndərildi!');
+            showCustomAlert('Cavab göndərildi!');
         }
     </script>
 </body>
