@@ -2,7 +2,6 @@
     --bg-color: #0b0b0b;
     --card-bg: #141414;
     --primary-red: #ff1e1e;
-    --accent-red: #ff4d4d;
     --dark-red: #8b0000;
     --text-color: #ffffff;
     --text-gray: #aaaaaa;
@@ -21,35 +20,6 @@ body {
     color: var(--text-color);
     padding-bottom: 70px;
     overflow-x: hidden;
-    position: relative;
-}
-
-/* Arxa fonda hərəkət edən PUBG elementləri / ikonları */
-.bg-animations {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.floating-pubg {
-    position: absolute;
-    font-size: 20px;
-    font-weight: bold;
-    color: rgba(255, 30, 30, 0.15);
-    animation: floatUp 12s linear infinite;
-    text-shadow: 0 0 5px rgba(255, 30, 30, 0.2);
-}
-
-@keyframes floatUp {
-    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-    20% { opacity: 0.25; }
-    80% { opacity: 0.25; }
-    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
 }
 
 /* Splash Screen */
@@ -74,24 +44,15 @@ body {
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 0 20px var(--primary-red);
-    animation: pulse 2s infinite;
 }
 
 #splash-screen h2 {
     margin-top: 20px;
     color: var(--primary-red);
-    text-shadow: 0 0 10px rgba(255, 30, 30, 0.5);
     font-size: 22px;
-    letter-spacing: 1px;
 }
 
-@keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 15px var(--primary-red); }
-    50% { transform: scale(1.05); box-shadow: 0 0 30px var(--primary-red); }
-    100% { transform: scale(0.95); box-shadow: 0 0 15px var(--primary-red); }
-}
-
-/* Navigation Bar (Bottom) */
+/* Navigation Bar */
 .nav-bar {
     position: fixed;
     bottom: 0;
@@ -119,7 +80,6 @@ body {
 
 .nav-item.active, .nav-item:hover {
     color: var(--primary-red);
-    text-shadow: 0 0 8px var(--primary-red);
 }
 
 .nav-item i {
@@ -152,12 +112,7 @@ body {
     width: 100%;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(255, 30, 30, 0.4);
     transition: 0.3s;
-}
-
-.neon-btn:hover {
-    box-shadow: 0 0 20px var(--primary-red);
 }
 
 input, select, textarea {
@@ -173,7 +128,6 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
     border-color: var(--primary-red);
     outline: none;
-    box-shadow: 0 0 8px rgba(255, 30, 30, 0.3);
 }
 
 .section {
@@ -192,7 +146,7 @@ input:focus, select:focus, textarea:focus {
     font-size: 12px;
 }
 
-/* Xüsusi Sayt Bildirişi */
+/* Custom Alert */
 #custom-alert {
     position: fixed;
     top: 20px;
@@ -203,7 +157,6 @@ input:focus, select:focus, textarea:focus {
     color: white;
     padding: 12px 20px;
     border-radius: 8px;
-    box-shadow: 0 0 15px rgba(255, 30, 30, 0.5);
     z-index: 10000;
     transition: transform 0.4s ease;
     text-align: center;
@@ -214,7 +167,7 @@ input:focus, select:focus, textarea:focus {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Modal Pəncərələr */
+/* Modals */
 .modal {
     display: none;
     position: fixed;
@@ -222,7 +175,7 @@ input:focus, select:focus, textarea:focus {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     z-index: 2000;
     justify-content: center;
     align-items: center;
@@ -234,16 +187,17 @@ input:focus, select:focus, textarea:focus {
     padding: 20px;
     border-radius: 12px;
     width: 90%;
-    max-width: 400px;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
-    box-shadow: 0 0 20px rgba(255, 30, 30, 0.3);
 }
 
 .close-modal {
     position: absolute;
     top: 10px;
     right: 15px;
-    font-size: 20px;
+    font-size: 22px;
     color: var(--text-gray);
     cursor: pointer;
 }
