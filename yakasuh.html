@@ -32,6 +32,25 @@
             <p>Ümumi Çıxan Pul: <span id="stat-outcome" style="color: var(--primary-red);">0 ₼</span></p>
         </div>
 
+        <!-- Rəsmi RentX Elan Yerləşdir (Admin) -->
+        <div class="card">
+            <h3>Rəsmi RentX Elanı Yerləşdir</h3>
+            <form id="admin-ad-form">
+                <select id="admin-ad-game" required>
+                    <option value="PUBG Mobile">PUBG Mobile</option>
+                </select>
+                <select id="admin-ad-duration" required>
+                    <option value="Saatlıq">Saatlıq</option>
+                    <option value="Günlük">Günlük</option>
+                    <option value="Həftəlik">Həftəlik</option>
+                </select>
+                <input type="number" id="admin-ad-price" placeholder="Qiymət (AZN)" required>
+                <textarea id="admin-ad-notes" placeholder="Hesab məlumatları" required></textarea>
+                <input type="file" id="admin-ad-file" accept="image/*" required style="padding: 8px; margin-bottom: 10px;">
+                <button type="submit" class="neon-btn">Rəsmi Elan Paylaş (RentX)</button>
+            </form>
+        </div>
+
         <!-- Kart İdarəetməsi (Maksimum 5) -->
         <div class="card">
             <h3>Depozit Kartları (Maks: 5)</h3>
@@ -85,8 +104,37 @@
             }
         }
 
+        // Admin rəsmi elan paylaşma məntiqi
+        document.getElementById('admin-ad-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let fileInput = document.getElementById('admin-ad-file');
+            if(fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(event) {
+                    let adId = Math.floor(100000 + Math.random() * 900000);
+                    let adData = {
+                        id: adId,
+                        userId: 'admin_official',
+                        userName: 'RentX (Rəsmi)',
+                        game: document.getElementById('admin-ad-game').value,
+                        durationType: document.getElementById('admin-ad-duration').value,
+                        price: document.getElementById('admin-ad-price').value,
+                        notes: document.getElementById('admin-ad-notes').value,
+                        image: event.target.result,
+                        status: 'Elan əlavə edildi',
+                        views: 0,
+                        date: new Date().toLocaleString()
+                    };
+                    db.ref('ads/' + adId).set(adData).then(() => {
+                        alert('Rəsmi RentX elanı uğurla paylaşıldı!');
+                        document.getElementById('admin-ad-form').reset();
+                    });
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        });
+
         function loadAdminData() {
-            // Kartların İdarəsi və Siyahısı
             db.ref('admin_cards').on('value', snapshot => {
                 let container = document.getElementById('admin-cards-list');
                 container.innerHTML = '';
@@ -105,7 +153,6 @@
                 }
             });
 
-            // Statistika və Depozitlər
             db.ref('deposits').on('value', snapshot => {
                 let container = document.getElementById('admin-deposits');
                 container.innerHTML = '';
@@ -127,7 +174,6 @@
                 document.getElementById('stat-income').innerText = totalIncome + ' ₼';
             });
 
-            // Çıxarışlar
             db.ref('withdrawals').on('value', snapshot => {
                 let container = document.getElementById('admin-withdrawals');
                 container.innerHTML = '';
@@ -149,7 +195,6 @@
                 document.getElementById('stat-outcome').innerText = totalOutcome + ' ₼';
             });
 
-            // Elanlar
             db.ref('ads').on('value', snapshot => {
                 let container = document.getElementById('admin-ads');
                 container.innerHTML = '';
@@ -160,14 +205,15 @@
                             <p><b>Elan №: ${ad.id}</b> | ${ad.game} - ${ad.price} AZN</p>
                             <p style="font-size:12px; color:#aaa;">${ad.notes}</p>
                             <p>Status: ${ad.status}</p>
-                            <button onclick="updateAdStatus(${ad.id}, 'Elan əlavə edildi')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Təsdiq Et</button>
-                            <button onclick="updateAdStatus(${ad.id}, 'Elan ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ləğv Et</button>
+                            ${ad.status === 'Elan baxışdadır' ? `
+                                <button onclick="updateAdStatus(${ad.id}, 'Elan əlavə edildi')" style="background:green; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Təsdiq Et</button>
+                                <button onclick="updateAdStatus(${ad.id}, 'Elan ləğv edildi')" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; margin-top:5px;">Ləğv Et</button>
+                            ` : ''}
                         </div>
                     `;
                 });
             });
 
-            // Dəstək
             db.ref('support').on('value', snapshot => {
                 let container = document.getElementById('admin-support');
                 container.innerHTML = '';
@@ -175,7 +221,7 @@
                     let s = child.val();
                     container.innerHTML += `
                         <div style="background:#1a1a1a; padding:10px; margin-top:8px; border-radius:6px;">
-                            <p><b>${s.userName}:</b> ${s.message}</p>
+                            <p><b>[${s.category}] ${s.userName}:</b> ${s.message}</p>
                             <input type="text" id="reply_${s.id}" placeholder="Cavab yaz..." style="margin-top:5px;">
                             <button onclick="replySupport('${s.id}')" style="background:var(--primary-red); color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Cavabla</button>
                         </div>
