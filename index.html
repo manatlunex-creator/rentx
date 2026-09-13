@@ -1,1 +1,151 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentX - Telegram Mini App</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
 
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="image.png" alt="RentX Logo">
+        <h2>RentX Xoş Gəldiniz!</h2>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- 1. Əsas Səhifə -->
+        <div id="home-section" class="section active">
+            <h2>PUBG Mobile Elanları</h2>
+            <div id="ads-list" style="margin-top: 15px;">
+                <!-- Elanlar dinamik yüklənəcək -->
+            </div>
+        </div>
+
+        <!-- 2. Dəstək Bölməsi -->
+        <div id="support-section" class="section">
+            <h2>Dəstək Mərkəzi</h2>
+            <div class="card">
+                <form id="support-form">
+                    <textarea id="support-message" placeholder="Problem və ya sualınızı ətraflı yazın..." rows="4" required></textarea>
+                    <button type="submit" class="neon-btn">Sorğu Göndər</button>
+                </form>
+            </div>
+            <h3>Sorjularım</h3>
+            <div id="my-tickets" style="margin-top: 10px;"></div>
+        </div>
+
+        <!-- 3. Elan Əlavə Et -->
+        <div id="add-ad-section" class="section">
+            <h2>Yeni Elan Yerləşdir</h2>
+            <div class="card">
+                <form id="ad-form">
+                    <select id="ad-game" required>
+                        <option value="PUBG Mobile">PUBG Mobile</option>
+                    </select>
+                    <select id="ad-duration-type" required>
+                        <option value="Saatlıq">Saatlıq</option>
+                        <option value="Günlük">Günlük</option>
+                        <option value="Həftəlik">Həftəlik</option>
+                    </select>
+                    <input type="number" id="ad-price" placeholder="Qiymət (AZN)" required>
+                    <textarea id="ad-notes" placeholder="Hesab məlumatları və qeydlər" required></textarea>
+                    <input type="text" id="ad-images" placeholder="Hesab şəkillərinin linkləri (vergüllə ayırın)" required>
+                    <button type="submit" class="neon-btn">Təsdiqə Göndər</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 4. Chat Bölməsi -->
+        <div id="chat-section" class="section">
+            <h2>Söhbətlər</h2>
+            <div class="card" style="text-align: center; color: var(--text-gray);">
+                <p>Aktiv söhbət yoxdur. Elan sahibləri ilə elanlar vasitəsilə əlaqə saxlaya bilərsiniz.</p>
+            </div>
+        </div>
+
+        <!-- 5. Profil Bölməsi -->
+        <div id="profile-section" class="section">
+            <div class="card" style="text-align: center;">
+                <img id="user-avatar" src="image.png" alt="Profil" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--primary-red); object-fit: cover;">
+                <h3 id="profile-name" style="margin-top: 10px;">İstifadəçi</h3>
+                <p style="color: var(--text-gray); font-size: 12px;">Qoşulma tarixi: <span id="join-date">23.01.2026</span></p>
+                
+                <div style="margin-top: 15px; display: flex; justify-content: space-around; background: #1a1a1a; padding: 10px; border-radius: 8px;">
+                    <div>
+                        <small>Balans</small>
+                        <h4 id="user-balance" style="color: var(--primary-red);">0.00 AZN</h4>
+                    </div>
+                    <div>
+                        <small>Bonus Balans</small>
+                        <h4 id="user-bonus" style="color: #ffaa00;">0.00 AZN</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balans Əlavə Et / Çıxarış -->
+            <div class="card">
+                <h3>Balans Əlavə Et (Min: 1 ₼, Max: 100 ₼)</h3>
+                <select id="deposit-card-select">
+                    <option value="Kapital Bank: 4169 ... 8821">Kapital Bank: 4169 ... 8821</option>
+                    <option value="Leobank: 5071 ... 1234">Leobank: 5071 ... 1234</option>
+                </select>
+                <input type="number" id="deposit-amount" min="1" max="100" placeholder="Məbləğ daxil edin">
+                <input type="text" id="deposit-receipt" placeholder="Ödəniş qəbzi nömrəsi / linki" required>
+                <button onclick="makeDeposit()" class="neon-btn">Depozit Ver</button>
+                <div id="deposit-status-list" style="margin-top: 10px;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Pul Çıxarışı (Min: 3 ₼, Max: 50 ₼)</h3>
+                <p style="font-size: 11px; color: var(--text-gray); margin-bottom: 8px;">Altda heç bir komissiya tutulmur</p>
+                <input type="number" id="withdraw-amount" min="3" max="50" placeholder="Çıxarılacaq məbləğ">
+                <input type="text" id="withdraw-card" placeholder="Kart nömrəsi (AZ...)" required>
+                <button onclick="makeWithdraw()" class="neon-btn">Çıxarış Et</button>
+                <div id="withdraw-status-list" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Dostunu Dəvət Et -->
+            <div class="card">
+                <h3>Dostunu Dəvət Et (+3 ₼ Bonus)</h3>
+                <p style="font-size: 12px; color: var(--text-gray); margin: 8px 0;">Dostunu gətir, bonus qazan! (Bonus istifadəsi hələlik bağlıdır).</p>
+                <button onclick="copyInviteLink()" class="neon-btn">Dəvət Linkini Kopyala</button>
+            </div>
+
+            <!-- Kanallar və Rəy -->
+            <div class="card">
+                <h3>Rəsmi Kanal</h3>
+                <a href="https://www.tiktok.com/@rentx10?_r=1&_t=ZS-99hW36siVEm" target="_blank" style="color: var(--primary-red); display: block; margin: 8px 0;"><i class="fa-brands fa-tiktok"></i> TikTok Səhifəmiz</a>
+                
+                <h3 style="margin-top: 15px;">Qiymətləndir</h3>
+                <div id="star-rating" style="font-size: 24px; color: #ffaa00; cursor: pointer; margin: 10px 0;">
+                    <i class="fa-solid fa-star" onclick="rateApp(1)"></i>
+                    <i class="fa-solid fa-star" onclick="rateApp(2)"></i>
+                    <i class="fa-solid fa-star" onclick="rateApp(3)"></i>
+                    <i class="fa-solid fa-star" onclick="rateApp(4)"></i>
+                    <i class="fa-solid fa-star" onclick="rateApp(5)"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('home', this)"><i class="fa-solid fa-house"></i>Əsas Səhifə</button>
+        <button class="nav-item" onclick="switchTab('support', this)"><i class="fa-solid fa-headset"></i>Dəstək</button>
+        <button class="nav-item" onclick="switchTab('add-ad', this)"><i class="fa-solid fa-circle-plus"></i>Elan Əlavə Et</button>
+        <button class="nav-item" onclick="switchTab('chat', this)"><i class="fa-solid fa-comments"></i>Chat</button>
+        <button class="nav-item" onclick="switchTab('profile', this)"><i class="fa-solid fa-user"></i>Profil</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
