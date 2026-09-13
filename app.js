@@ -12,7 +12,6 @@ setTimeout(() => {
     setTimeout(() => splash.style.display = 'none', 500);
 }, 2000);
 
-// Telegram User Session Simulation (ve ya Telegram WebApp API)
 let currentUser = {
     id: 'user_' + Math.floor(Math.random() * 1000000),
     name: 'İstifadəçi ' + Math.floor(Math.random() * 1000),
@@ -21,7 +20,6 @@ let currentUser = {
     joinDate: '23.01.2026'
 };
 
-// Əgər Telegram vasitəsilə açılıbsa məlumatları çək
 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
     let tgUser = window.Telegram.WebApp.initDataUnsafe.user;
     currentUser.id = tgUser.id;
@@ -37,8 +35,8 @@ db.ref('users/' + currentUser.id).on('value', (snapshot) => {
     if (data) {
         currentUser.balance = data.balance || 0;
         currentUser.bonus = data.bonus || 0;
-        document.getElementById('user-balance').innerText = currentUser.balance.toFixed(2) + ' ₅';
-        document.getElementById('user-bonus').innerText = currentUser.bonus.toFixed(2) + ' ₅';
+        document.getElementById('user-balance').innerText = currentUser.balance.toFixed(2) + ' ₼';
+        document.getElementById('user-bonus').innerText = currentUser.bonus.toFixed(2) + ' ₼';
     } else {
         db.ref('users/' + currentUser.id).set({
             name: currentUser.name,
@@ -46,6 +44,27 @@ db.ref('users/' + currentUser.id).on('value', (snapshot) => {
             bonus: 0,
             joinDate: currentUser.joinDate
         });
+    }
+});
+
+// Admin Kartlarını Çəkib Random Biri Seçmək
+let selectedDepositCard = "";
+db.ref('admin_cards').on('value', (snapshot) => {
+    let cards = snapshot.val();
+    let cardInfoEl = document.getElementById('target-card-info');
+    if (cards) {
+        let cardList = Object.values(cards);
+        if (cardList.length > 0) {
+            let randomIndex = Math.floor(Math.random() * cardList.length);
+            selectedDepositCard = cardList[randomIndex].title;
+            cardInfoEl.innerText = selectedDepositCard;
+        } else {
+            selectedDepositCard = "Təyin olunmuş kart yoxdur";
+            cardInfoEl.innerText = "Hazırda aktiv kart mövcud deyil.";
+        }
+    } else {
+        selectedDepositCard = "Təyin olunmuş kart yoxdur";
+        cardInfoEl.innerText = "Hazırda aktiv kart mövcud deyil.";
     }
 });
 
@@ -120,17 +139,24 @@ function makeDeposit() {
         alert('Minimum 1 AZN, maksimum 100 AZN daxil edin!');
         return;
     }
+    if(!selectedDepositCard || selectedDepositCard.includes("yoxdur")) {
+        alert('Ödəniş üçün kart təyin edilməyib!');
+        return;
+    }
     let depId = 'dep_' + Date.now();
     db.ref('deposits/' + depId).set({
         id: depId,
         userId: currentUser.id,
         userName: currentUser.name,
         amount: amount,
+        cardUsed: selectedDepositCard,
         receipt: receipt,
         status: 'Gözləmədədir',
         date: new Date().toLocaleString()
     }).then(() => {
         alert('Depozit sorğusu yaradıldı!');
+        document.getElementById('deposit-amount').value = '';
+        document.getElementById('deposit-receipt').value = '';
     });
 }
 
@@ -159,6 +185,8 @@ function makeWithdraw() {
         date: new Date().toLocaleString()
     }).then(() => {
         alert('Çıxarış sorğusu göndərildi!');
+        document.getElementById('withdraw-amount').value = '';
+        document.getElementById('withdraw-card').value = '';
     });
 }
 
@@ -182,7 +210,6 @@ document.getElementById('support-form').addEventListener('submit', function(e) {
     });
 });
 
-// Dəvət Linki Kopyala
 function copyInviteLink() {
     navigator.clipboard.writeText(`https://t.me/RentXBot?start=${currentUser.id}`);
     alert('Dəvət linki kopyalandı!');
@@ -190,5 +217,4 @@ function copyInviteLink() {
 
 function rateApp(stars) {
     alert(`Təşəkkürlər! ${stars} ulduz qeydə alındı.`);
-      }
-
+}
